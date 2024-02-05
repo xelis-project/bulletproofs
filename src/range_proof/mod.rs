@@ -608,6 +608,7 @@ impl RangeProofVerification<'_> {
         RangeProofVerification::verify_batch(core::slice::from_ref(self), bp_gens, pc_gens)
     }
 
+    // TODO(merge): need a random factor between batches this is insecure
     pub fn verify_batch(
         batch: &[RangeProofVerification],
         bp_gens: &BulletproofGens,

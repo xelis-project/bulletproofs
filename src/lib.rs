@@ -34,7 +34,7 @@ mod transcript;
 pub use crate::errors::ProofError;
 pub use crate::generators::{BulletproofGens, BulletproofGensShare, PedersenGens};
 pub use crate::linear_proof::LinearProof;
-pub use crate::range_proof::RangeProof;
+pub use crate::range_proof::{RangeProof, RangeProofVerification};
 
 #[cfg_attr(feature = "docs", doc(include = "../docs/aggregation-api.md"))]
 pub mod range_proof_mpc {
