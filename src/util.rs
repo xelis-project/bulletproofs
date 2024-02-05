@@ -267,6 +267,29 @@ pub fn read32(data: &[u8]) -> [u8; 32] {
     buf32
 }
 
+pub(crate) struct AssertSizeHint<I: Iterator<Item = T>, T> {
+    iter: I,
+    size_hint: usize,
+}
+
+impl<I: Iterator<Item = T>, T> AssertSizeHint<I, T> {
+    pub fn new(iter: I, size_hint: usize) -> Self {
+        Self { iter, size_hint }
+    }
+}
+
+impl<I: Iterator<Item = T>, T> Iterator for AssertSizeHint<I, T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.size_hint, Some(self.size_hint))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
