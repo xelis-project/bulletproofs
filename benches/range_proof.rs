@@ -10,8 +10,8 @@ use curve25519_dalek::scalar::Scalar;
 
 use merlin::Transcript;
 
+use bulletproofs::RangeProof;
 use bulletproofs::{BulletproofGens, PedersenGens};
-use bulletproofs::{RangeProof, RangeProofVerification};
 
 static AGGREGATION_SIZES: [usize; 6] = [1, 2, 4, 8, 16, 32];
 
@@ -135,7 +135,11 @@ criterion_group! {
     verify_aggregated_rangeproof_n_64,
 }
 
-fn verify_aggregated_rangeproof_batch_helper(name: &'static str, nm: &[(usize, usize)], c: &mut Criterion) {
+fn verify_aggregated_rangeproof_batch_helper(
+    name: &'static str,
+    nm: &[(usize, usize)],
+    c: &mut Criterion,
+) {
     let label = format!("Batch rangeproof verify {}", name);
 
     c.bench_function(&label, move |b| {
@@ -171,30 +175,33 @@ fn verify_aggregated_rangeproof_batch_helper(name: &'static str, nm: &[(usize, u
 
         let mut rng = rand::thread_rng();
         b.iter(|| {
-            let prepared: Vec<_> = proofs
+            let mut transcripts = proofs
                 .iter()
-                .map(|(proof, commitments, n)| {
-                    let mut transcript = Transcript::new(b"AggregatedRangeProofTest");
-                    proof
-                        .prepare_verify_multiple_with_rng(
-                            &bp_gens,
-                            &pc_gens,
-                            &mut transcript,
-                            commitments,
-                            *n,
-                            &mut rng,
-                        )
-                        .unwrap()
-                })
-                .collect();
+                .map(|_| Transcript::new(b"AggregatedRangeProofTest"))
+                .collect::<Vec<_>>();
 
-            assert!(RangeProofVerification::verify_batch(&prepared, &bp_gens, &pc_gens).is_ok());
+            assert!(RangeProof::verify_batch_with_rng(
+                proofs
+                    .iter()
+                    .zip(&mut transcripts)
+                    .map(|((proof, commitments, n), transcript)| {
+                        proof.verification_view(transcript, commitments, *n)
+                    }),
+                &bp_gens,
+                &pc_gens,
+                &mut rng
+            )
+            .is_ok());
         });
     });
 }
 
 fn verify_batch_32_1_64_4_64_2_64_1(c: &mut Criterion) {
-    verify_aggregated_rangeproof_batch_helper("32_1_64_4_64_2_64_1", &[(32, 1), (64, 4), (64, 2), (64, 1)], c);
+    verify_aggregated_rangeproof_batch_helper(
+        "32_1_64_4_64_2_64_1",
+        &[(32, 1), (64, 4), (64, 2), (64, 1)],
+        c,
+    );
 }
 
 fn verify_batch_64_2_x32(c: &mut Criterion) {
