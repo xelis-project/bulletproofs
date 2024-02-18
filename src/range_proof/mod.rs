@@ -75,6 +75,38 @@ pub struct RangeProof {
     ipp_proof: InnerProductProof,
 }
 
+pub trait ValueCommitment: Copy {
+    fn decompress(&self) -> Option<RistrettoPoint>;
+    fn compress(&self) -> CompressedRistretto;
+}
+
+impl ValueCommitment for (RistrettoPoint, CompressedRistretto) {
+    fn decompress(&self) -> Option<RistrettoPoint> {
+        Some(self.0)
+    }
+    fn compress(&self) -> CompressedRistretto {
+        self.1
+    }
+}
+
+impl ValueCommitment for RistrettoPoint {
+    fn decompress(&self) -> Option<RistrettoPoint> {
+        Some(*self)
+    }
+    fn compress(&self) -> CompressedRistretto {
+        self.compress()
+    }
+}
+
+impl ValueCommitment for CompressedRistretto {
+    fn decompress(&self) -> Option<RistrettoPoint> {
+        self.decompress()
+    }
+    fn compress(&self) -> CompressedRistretto {
+        *self
+    }
+}
+
 impl RangeProof {
     /// Create a rangeproof for a given pair of value `v` and
     /// blinding scalar `v_blinding`.
@@ -318,7 +350,7 @@ impl RangeProof {
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
         transcript: &mut Transcript,
-        V: &CompressedRistretto,
+        V: &impl ValueCommitment,
         n: usize,
         rng: &mut T,
     ) -> Result<(), ProofError> {
@@ -335,7 +367,7 @@ impl RangeProof {
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
         transcript: &mut Transcript,
-        V: &CompressedRistretto,
+        V: &impl ValueCommitment,
         n: usize,
     ) -> Result<(), ProofError> {
         self.verify_single_with_rng(bp_gens, pc_gens, transcript, V, n, &mut thread_rng())
@@ -347,7 +379,7 @@ impl RangeProof {
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
         transcript: &mut Transcript,
-        value_commitments: &[CompressedRistretto],
+        value_commitments: &[impl ValueCommitment],
         n: usize,
         rng: &mut T,
     ) -> Result<(), ProofError> {
@@ -382,12 +414,12 @@ impl RangeProof {
     }
 
     /// Create a view to this range proof for batch verification.
-    pub fn verification_view<'a>(
+    pub fn verification_view<'a, V: ValueCommitment>(
         &'a self,
         transcript: &'a mut Transcript,
-        value_commitments: &'a [CompressedRistretto],
+        value_commitments: &'a [V],
         n: usize,
-    ) -> RangeProofView<'a> {
+    ) -> RangeProofView<'a, V> {
         RangeProofView {
             proof: self,
             transcript,
@@ -396,16 +428,16 @@ impl RangeProof {
         }
     }
 
-    pub fn verify_batch<'a>(
-        batch: impl IntoIterator<Item = RangeProofView<'a>>,
+    pub fn verify_batch<'a, V: ValueCommitment + 'a>(
+        batch: impl IntoIterator<Item = RangeProofView<'a, V>>,
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
     ) -> Result<(), ProofError> {
         Self::verify_batch_with_rng(batch, bp_gens, pc_gens, &mut thread_rng())
     }
 
-    pub fn verify_batch_with_rng<'a, T: RngCore + CryptoRng>(
-        batch: impl IntoIterator<Item = RangeProofView<'a>>,
+    pub fn verify_batch_with_rng<'a, T: RngCore + CryptoRng, V: ValueCommitment + 'a>(
+        batch: impl IntoIterator<Item = RangeProofView<'a, V>>,
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
         rng: &mut T,
@@ -526,10 +558,10 @@ impl<'de> Deserialize<'de> for RangeProof {
 }
 
 // TODO(merge): naming
-pub struct RangeProofView<'a> {
+pub struct RangeProofView<'a, V: ValueCommitment> {
     proof: &'a RangeProof,
     transcript: &'a mut Transcript,
-    value_commitments: &'a [CompressedRistretto],
+    value_commitments: &'a [V],
     n: usize,
 }
 
@@ -564,9 +596,9 @@ impl<'a> BatchCollector<'a> {
         }
     }
 
-    fn add_proof<T: RngCore + CryptoRng>(
+    fn add_proof<T: RngCore + CryptoRng, V: ValueCommitment>(
         &mut self,
-        view: RangeProofView,
+        view: RangeProofView<V>,
         rng: &mut T,
     ) -> Result<(), ProofError> {
         let m = view.value_commitments.len();
@@ -589,7 +621,7 @@ impl<'a> BatchCollector<'a> {
         for V in view.value_commitments.iter() {
             // Allow the commitments to be zero (0 value, 0 blinding)
             // See https://github.com/dalek-cryptography/bulletproofs/pull/248#discussion_r255167177
-            view.transcript.append_point(b"V", V);
+            view.transcript.append_point(b"V", &V.compress());
         }
 
         view.transcript
