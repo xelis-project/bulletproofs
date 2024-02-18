@@ -400,7 +400,7 @@ impl RangeProof {
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
         transcript: &mut Transcript,
-        value_commitments: &[CompressedRistretto],
+        value_commitments: &[impl ValueCommitment],
         n: usize,
     ) -> Result<(), ProofError> {
         self.verify_multiple_with_rng(
