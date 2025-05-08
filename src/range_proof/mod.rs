@@ -632,9 +632,6 @@ impl<'a> BatchCollector<'a> {
 
         let w = view.transcript.challenge_scalar(b"w");
 
-        // Challenge value for batching statements to be verified
-        let c = Scalar::random(rng);
-
         let (x_sq, x_inv_sq, s) = view
             .proof
             .ipp_proof
@@ -643,6 +640,12 @@ impl<'a> BatchCollector<'a> {
 
         let a = view.proof.ipp_proof.a;
         let b = view.proof.ipp_proof.b;
+
+        view.transcript.append_scalar(b"ipp_a", &a);
+        view.transcript.append_scalar(b"ipp_b", &b);
+
+        // Challenge value for batching statements to be verified
+        let c = view.transcript.challenge_scalar(b"c");
 
         // Construct concat_z_and_2, an iterator of the values of
         // z^0 * \vec(2)^n || z^1 * \vec(2)^n || ... || z^(m-1) * \vec(2)^n
