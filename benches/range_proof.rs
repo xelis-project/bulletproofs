@@ -23,10 +23,10 @@ fn create_aggregated_rangeproof_helper(n: usize, c: &mut Criterion) {
         move |b, &&m| {
             let pc_gens = PedersenGens::default();
             let bp_gens = BulletproofGens::new(n, m);
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             let (min, max) = (0u64, ((1u128 << n) - 1) as u64);
-            let values: Vec<u64> = (0..m).map(|_| rng.gen_range(min..max)).collect();
+            let values: Vec<u64> = (0..m).map(|_| rng.random_range(min..max)).collect();
             let blindings: Vec<Scalar> = (0..m).map(|_| Scalar::random(&mut rng)).collect();
 
             b.iter(|| {
@@ -81,10 +81,10 @@ fn verify_aggregated_rangeproof_helper(n: usize, c: &mut Criterion) {
         move |b, &&m| {
             let pc_gens = PedersenGens::default();
             let bp_gens = BulletproofGens::new(n, m);
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             let (min, max) = (0u64, ((1u128 << n) - 1) as u64);
-            let values: Vec<u64> = (0..m).map(|_| rng.gen_range(min..max)).collect();
+            let values: Vec<u64> = (0..m).map(|_| rng.random_range(min..max)).collect();
             let blindings: Vec<Scalar> = (0..m).map(|_| Scalar::random(&mut rng)).collect();
 
             let mut transcript = Transcript::new(b"AggregateRangeProofBenchmark");
@@ -152,10 +152,10 @@ fn verify_aggregated_rangeproof_batch_helper(
         let proofs: Vec<_> = nm
             .iter()
             .map(|&(n, m)| {
-                let mut rng = rand::thread_rng();
+                let mut rng = rand::rng();
 
                 let (min, max) = (0u64, ((1u128 << n) - 1) as u64);
-                let values: Vec<u64> = (0..m).map(|_| rng.gen_range(min..max)).collect();
+                let values: Vec<u64> = (0..m).map(|_| rng.random_range(min..max)).collect();
                 let blindings: Vec<Scalar> = (0..m).map(|_| Scalar::random(&mut rng)).collect();
 
                 let mut transcript = Transcript::new(b"AggregatedRangeProofTest");
@@ -173,7 +173,7 @@ fn verify_aggregated_rangeproof_batch_helper(
             })
             .collect();
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         b.iter(|| {
             let mut transcripts = proofs
                 .iter()

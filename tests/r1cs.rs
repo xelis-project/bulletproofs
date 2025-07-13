@@ -11,7 +11,6 @@ use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
 use rand::seq::SliceRandom;
-use rand::thread_rng;
 
 // Shuffle gadget (documented in markdown file)
 
@@ -89,7 +88,7 @@ impl ShuffleProof {
 
         // Construct blinding factors using an RNG.
         // Note: a non-example implementation would want to operate on existing commitments.
-        let mut blinding_rng = rand::thread_rng();
+        let mut blinding_rng = rand::rng();
 
         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input
             .into_iter()
@@ -153,13 +152,13 @@ fn kshuffle_helper(k: usize) {
 
     let (proof, input_commitments, output_commitments) = {
         // Randomly generate inputs and outputs to kshuffle
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let (min, max) = (0u64, std::u64::MAX);
         let input: Vec<Scalar> = (0..k)
             .map(|_| Scalar::from(rng.gen_range(min..max)))
             .collect();
         let mut output = input.clone();
-        output.shuffle(&mut rand::thread_rng());
+        output.shuffle(&mut rand::rng());
 
         let mut prover_transcript = Transcript::new(b"ShuffleProofTest");
         ShuffleProof::prove(&pc_gens, &bp_gens, &mut prover_transcript, &input, &output).unwrap()
@@ -403,10 +402,9 @@ pub fn range_proof<CS: ConstraintSystem>(
 
 #[test]
 fn range_proof_gadget() {
-    use rand::thread_rng;
     use rand::Rng;
 
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     let m = 3; // number of values to test per `n`
 
     for n in [2, 10, 32, 63].iter() {
@@ -428,7 +426,7 @@ fn range_proof_helper(v_val: u64, n: usize) -> Result<(), R1CSError> {
     let (proof, commitment) = {
         // Prover makes a `ConstraintSystem` instance representing a range proof gadget
         let mut prover_transcript = Transcript::new(b"RangeProofTest");
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         let mut prover = Prover::new(&pc_gens, &mut prover_transcript);
 

@@ -25,7 +25,7 @@ fn create_linear_proof_helper(c: &mut Criterion) {
     c.bench_function_over_inputs(
         "linear proof creation",
         move |bench, n| {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             let bp_gens = BulletproofGens::new(*n, 1);
             // Calls `.G()` on generators, which should be a pub(crate) function only.
@@ -103,7 +103,7 @@ fn linear_verify(c: &mut Criterion) {
         "linear proof verification",
         move |bench, n| {
             let bp_gens = BulletproofGens::new(*n, 1);
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             // Calls `.G()` on generators, which should be a pub(crate) function only.
             // For now, make that function public so it can be accessed from benches.

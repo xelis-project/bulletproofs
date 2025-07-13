@@ -1,14 +1,8 @@
 #![allow(non_snake_case)]
 #![cfg_attr(feature = "docs", doc(include = "../../docs/range-proof-protocol.md"))]
 
-extern crate alloc;
-#[cfg(feature = "std")]
-extern crate rand;
-
-#[cfg(feature = "std")]
-use self::rand::thread_rng;
 use alloc::vec::Vec;
-use curve25519_dalek::traits::VartimeMultiscalarMul;
+use curve25519_dalek::traits::{IsIdentity, VartimeMultiscalarMul};
 
 use core::iter;
 
@@ -204,7 +198,7 @@ impl RangeProof {
             v,
             v_blinding,
             n,
-            &mut thread_rng(),
+            &mut rand::rng(),
         )
     }
 
@@ -337,7 +331,7 @@ impl RangeProof {
             values,
             blindings,
             n,
-            &mut thread_rng(),
+            &mut rand::rng(),
         )
     }
 
@@ -369,7 +363,7 @@ impl RangeProof {
         V: &impl ValueCommitment,
         n: usize,
     ) -> Result<(), ProofError> {
-        self.verify_single_with_rng(bp_gens, pc_gens, transcript, V, n, &mut thread_rng())
+        self.verify_single_with_rng(bp_gens, pc_gens, transcript, V, n, &mut rand::rng())
     }
 
     /// Verifies an aggregated rangeproof for the given value commitments.
@@ -408,7 +402,7 @@ impl RangeProof {
             transcript,
             value_commitments,
             n,
-            &mut thread_rng(),
+            &mut rand::rng(),
         )
     }
 
@@ -432,7 +426,7 @@ impl RangeProof {
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
     ) -> Result<(), ProofError> {
-        Self::verify_batch_with_rng(batch, bp_gens, pc_gens, &mut thread_rng())
+        Self::verify_batch_with_rng(batch, bp_gens, pc_gens, &mut rand::rng())
     }
 
     pub fn verify_batch_with_rng<'a, T: RngCore + CryptoRng, V: ValueCommitment + 'a>(
@@ -752,7 +746,6 @@ impl<'a> BatchCollector<'a> {
         )
         .ok_or_else(|| ProofError::VerificationError)?;
 
-        use group::Group;
         if mega_check.is_identity().into() {
             Ok(())
         } else {
@@ -775,13 +768,15 @@ fn delta(n: usize, m: usize, y: &Scalar, z: &Scalar) -> Scalar {
 
 #[cfg(test)]
 mod tests {
+    use rand::Rng;
+
     use super::*;
 
     use crate::generators::PedersenGens;
 
     #[test]
     fn test_delta() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let y = Scalar::random(&mut rng);
         let z = Scalar::random(&mut rng);
 
@@ -826,12 +821,11 @@ mod tests {
 
         // Prover's scope
         let (proof_bytes, value_commitments) = {
-            use self::rand::Rng;
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             // 0. Create witness data
             let (min, max) = (0u64, ((1u128 << n) - 1) as u64);
-            let values: Vec<u64> = (0..m).map(|_| rng.gen_range(min..max)).collect();
+            let values: Vec<u64> = (0..m).map(|_| rng.random_range(min..max)).collect();
             let blindings: Vec<Scalar> = (0..m).map(|_| Scalar::random(&mut rng)).collect();
 
             // 1. Create the proof
@@ -914,11 +908,10 @@ mod tests {
         let proofs: Vec<_> = nm
             .iter()
             .map(|&(n, m)| {
-                use self::rand::Rng;
-                let mut rng = rand::thread_rng();
+                let mut rng = rand::rng();
 
                 let (min, max) = (0u64, ((1u128 << n) - 1) as u64);
-                let values: Vec<u64> = (0..m).map(|_| rng.gen_range(min..max)).collect();
+                let values: Vec<u64> = (0..m).map(|_| rng.random_range(min..max)).collect();
                 let blindings: Vec<Scalar> = (0..m).map(|_| Scalar::random(&mut rng)).collect();
 
                 let mut transcript = Transcript::new(b"AggregatedRangeProofTest");
@@ -938,7 +931,7 @@ mod tests {
 
         // Verifier
         {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             let proofs: Vec<(RangeProof, _, _)> = proofs
                 .into_iter()
@@ -996,25 +989,24 @@ mod tests {
         let pc_gens = PedersenGens::default();
         let bp_gens = BulletproofGens::new(n, m);
 
-        use self::rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut transcript = Transcript::new(b"AggregatedRangeProofTest");
 
         // Parties 0, 2 are honest and use a 32-bit value
-        let v0 = rng.gen::<u32>() as u64;
+        let v0 = rng.random::<u32>() as u64;
         let v0_blinding = Scalar::random(&mut rng);
         let party0 = Party::new(&bp_gens, &pc_gens, v0, v0_blinding, n).unwrap();
 
-        let v2 = rng.gen::<u32>() as u64;
+        let v2 = rng.random::<u32>() as u64;
         let v2_blinding = Scalar::random(&mut rng);
         let party2 = Party::new(&bp_gens, &pc_gens, v2, v2_blinding, n).unwrap();
 
         // Parties 1, 3 are dishonest and use a 64-bit value
-        let v1 = rng.gen::<u64>();
+        let v1 = rng.random::<u64>();
         let v1_blinding = Scalar::random(&mut rng);
         let party1 = Party::new(&bp_gens, &pc_gens, v1, v1_blinding, n).unwrap();
 
-        let v3 = rng.gen::<u64>();
+        let v3 = rng.random::<u64>();
         let v3_blinding = Scalar::random(&mut rng);
         let party3 = Party::new(&bp_gens, &pc_gens, v3, v3_blinding, n).unwrap();
 
@@ -1069,11 +1061,10 @@ mod tests {
         let pc_gens = PedersenGens::default();
         let bp_gens = BulletproofGens::new(n, m);
 
-        use self::rand::Rng;
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut transcript = Transcript::new(b"AggregatedRangeProofTest");
 
-        let v0 = rng.gen::<u32>() as u64;
+        let v0 = rng.random::<u32>() as u64;
         let v0_blinding = Scalar::random(&mut rng);
         let party0 = Party::new(&bp_gens, &pc_gens, v0, v0_blinding, n).unwrap();
 

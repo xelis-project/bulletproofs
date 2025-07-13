@@ -23,9 +23,6 @@ use crate::errors::MPCError;
 use crate::generators::{BulletproofGens, PedersenGens};
 use crate::util;
 
-#[cfg(feature = "std")]
-use rand::thread_rng;
-
 use super::messages::*;
 
 /// Used to construct a party for the aggregated rangeproof MPC protocol.
@@ -81,7 +78,7 @@ impl<'a> PartyAwaitingPosition<'a> {
         self,
         j: usize,
     ) -> Result<(PartyAwaitingBitChallenge<'a>, BitCommitment), MPCError> {
-        self.assign_position_with_rng(j, &mut thread_rng())
+        self.assign_position_with_rng(j, &mut rand::rng())
     }
 
     /// Assigns a position in the aggregated proof to this party,
@@ -172,7 +169,7 @@ impl<'a> PartyAwaitingBitChallenge<'a> {
         self,
         vc: &BitChallenge,
     ) -> (PartyAwaitingPolyChallenge, PolyCommitment) {
-        self.apply_challenge_with_rng(vc, &mut thread_rng())
+        self.apply_challenge_with_rng(vc, &mut rand::rng())
     }
 
     /// Receive a [`BitChallenge`] from the dealer and use it to

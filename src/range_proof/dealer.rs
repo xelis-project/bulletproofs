@@ -24,9 +24,6 @@ use rand_core::{CryptoRng, RngCore};
 
 use crate::util;
 
-#[cfg(feature = "std")]
-use rand::thread_rng;
-
 use super::messages::*;
 
 /// Used to construct a dealer for the aggregated rangeproof MPC protocol.
@@ -300,7 +297,7 @@ impl<'a, 'b> DealerAwaitingProofShares<'a, 'b> {
     ///
     #[cfg(feature = "std")]
     pub fn receive_shares(self, proof_shares: &[ProofShare]) -> Result<RangeProof, MPCError> {
-        self.receive_shares_with_rng(proof_shares, &mut thread_rng())
+        self.receive_shares_with_rng(proof_shares, &mut rand::rng())
     }
 
     /// Assemble the final aggregated [`RangeProof`] from the given

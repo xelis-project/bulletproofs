@@ -437,7 +437,7 @@ mod tests {
     use sha3::Sha3_512;
 
     fn test_helper_create(n: usize) {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         use crate::generators::BulletproofGens;
         let bp_gens = BulletproofGens::new(n, 1);

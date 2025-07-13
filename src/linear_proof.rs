@@ -409,7 +409,7 @@ mod tests {
     use super::*;
 
     fn test_helper(n: usize) {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         use crate::generators::{BulletproofGens, PedersenGens};
         let bp_gens = BulletproofGens::new(n, 1);

@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 use core::iter;
 use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek::scalar::Scalar;
-use curve25519_dalek::traits::VartimeMultiscalarMul;
+use curve25519_dalek::traits::{IsIdentity, VartimeMultiscalarMul};
 
 use crate::generators::{BulletproofGens, PedersenGens};
 
@@ -95,7 +95,6 @@ impl ProofShare {
         use crate::inner_product_proof::inner_product;
         use crate::util;
         use core::ops::Not;
-        use group::Group;
 
         let n = self.l_vec.len();
 
