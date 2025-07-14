@@ -13,12 +13,15 @@ pub trait TranscriptProtocol {
     /// Append a domain separator for a length-`n` inner product proof.
     fn innerproduct_domain_sep(&mut self, n: u64);
 
+    #[cfg(feature = "yoloproofs")]
     /// Append a domain separator for a constraint system.
     fn r1cs_domain_sep(&mut self);
 
+    #[cfg(feature = "yoloproofs")]
     /// Commit a domain separator for a CS without randomized constraints.
     fn r1cs_1phase_domain_sep(&mut self);
 
+    #[cfg(feature = "yoloproofs")]
     /// Commit a domain separator for a CS with randomized constraints.
     fn r1cs_2phase_domain_sep(&mut self);
 
@@ -52,14 +55,17 @@ impl TranscriptProtocol for Transcript {
         self.append_u64(b"n", n);
     }
 
+    #[cfg(feature = "yoloproofs")]
     fn r1cs_domain_sep(&mut self) {
         self.append_message(b"dom-sep", b"r1cs v1");
     }
 
+    #[cfg(feature = "yoloproofs")]
     fn r1cs_1phase_domain_sep(&mut self) {
         self.append_message(b"dom-sep", b"r1cs-1phase");
     }
 
+    #[cfg(feature = "yoloproofs")]
     fn r1cs_2phase_domain_sep(&mut self) {
         self.append_message(b"dom-sep", b"r1cs-2phase");
     }
