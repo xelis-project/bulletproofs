@@ -2,6 +2,16 @@
 
 Entries are listed in reverse chronological order.
 
+## 5.2.0
+
+* Switch `merlin` version to our own fork
+* update dependency `thiserror` to `2`
+
+## 5.1.0
+
+* Replace `clear_on_drop` by `zeroize` dependency
+* Improve transcript in `RangeProof#verify`
+
 ## 5.0.0
 
 * Change `curve25519-dalek-ng` dependency to `curve25519-dalek`. A major version bump is required because one cannot import `curve25519-dalek` and `bulletproofs` without conflicts.

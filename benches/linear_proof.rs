@@ -1,13 +1,6 @@
 #![allow(non_snake_case)]
 
-#[macro_use]
-extern crate criterion;
-use criterion::Criterion;
-
-extern crate bulletproofs;
-extern crate curve25519_dalek;
-extern crate merlin;
-extern crate rand;
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
 use core::iter;
 
@@ -22,24 +15,25 @@ use merlin::Transcript;
 static TEST_SIZES: [usize; 5] = [64, 128, 256, 512, 1024];
 
 fn create_linear_proof_helper(c: &mut Criterion) {
-    c.bench_function_over_inputs(
-        "linear proof creation",
-        move |bench, n| {
+    let mut group = c.benchmark_group("linear proof creation");
+
+    for n in TEST_SIZES {
+        group.bench_with_input(BenchmarkId::from_parameter(n), &n, |bench, &n| {
             let mut rng = rand::rng();
 
-            let bp_gens = BulletproofGens::new(*n, 1);
+            let bp_gens = BulletproofGens::new(n, 1);
             // Calls `.G()` on generators, which should be a pub(crate) function only.
             // For now, make that function public so it can be accessed from benches.
             // We don't want to use bp_gens directly because we don't need the H generators.
-            let G: Vec<RistrettoPoint> = bp_gens.share(0).G(*n).cloned().collect();
+            let G: Vec<RistrettoPoint> = bp_gens.share(0).G(n).cloned().collect();
 
             let pedersen_gens = PedersenGens::default();
             let F = pedersen_gens.B;
             let B = pedersen_gens.B_blinding;
 
             // a and b are the vectors for which we want to prove c = <a,b>
-            let a: Vec<_> = (0..*n).map(|_| Scalar::random(&mut rng)).collect();
-            let b: Vec<_> = (0..*n).map(|_| Scalar::random(&mut rng)).collect();
+            let a: Vec<_> = (0..n).map(|_| Scalar::random(&mut rng)).collect();
+            let b: Vec<_> = (0..n).map(|_| Scalar::random(&mut rng)).collect();
 
             let mut transcript = Transcript::new(b"LinearProofBenchmark");
 
@@ -67,9 +61,8 @@ fn create_linear_proof_helper(c: &mut Criterion) {
                 )
                 .unwrap();
             })
-        },
-        TEST_SIZES,
-    );
+        });
+    }
 }
 
 /// Copied from src/inner_product_proof.rs
@@ -99,27 +92,28 @@ criterion_group! {
 }
 
 fn linear_verify(c: &mut Criterion) {
-    c.bench_function_over_inputs(
-        "linear proof verification",
-        move |bench, n| {
-            let bp_gens = BulletproofGens::new(*n, 1);
+    let mut group = c.benchmark_group("linear proof verification");
+
+    for n in TEST_SIZES {
+        group.bench_with_input(BenchmarkId::from_parameter(n), &n, |bench, &n| {
+            let bp_gens = BulletproofGens::new(n, 1);
             let mut rng = rand::rng();
 
             // Calls `.G()` on generators, which should be a pub(crate) function only.
             // For now, make that function public so it can be accessed from benches.
             // We can't simply use bp_gens directly because we don't need the H generators.
-            let G: Vec<RistrettoPoint> = bp_gens.share(0).G(*n).cloned().collect();
+            let G: Vec<RistrettoPoint> = bp_gens.share(0).G(n).cloned().collect();
             let pedersen_gens = PedersenGens::default();
             let F = pedersen_gens.B;
             let B = pedersen_gens.B_blinding;
 
-            let b: Vec<_> = (0..*n).map(|_| Scalar::random(&mut rng)).collect();
+            let b: Vec<_> = (0..n).map(|_| Scalar::random(&mut rng)).collect();
 
             // Generate the proof in its own scope to prevent reuse of
             // prover variables by the verifier
             let (proof, C) = {
                 // a and b are the vectors for which we want to prove c = <a,b>
-                let a: Vec<_> = (0..*n).map(|_| Scalar::random(&mut rng)).collect();
+                let a: Vec<_> = (0..n).map(|_| Scalar::random(&mut rng)).collect();
 
                 let mut transcript = Transcript::new(b"LinearProofBenchmark");
 
@@ -155,9 +149,8 @@ fn linear_verify(c: &mut Criterion) {
                     .verify(&mut verifier_transcript, &C, &G, &F, &B, b.clone())
                     .unwrap();
             });
-        },
-        TEST_SIZES,
-    );
+        });
+    }
 }
 
 criterion_group! {
