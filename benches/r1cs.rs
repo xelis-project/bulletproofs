@@ -24,7 +24,7 @@ use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
 use merlin::Transcript;
 use rand::seq::SliceRandom;
-use rand::Rng;
+use rand::RngExt;
 
 // Shuffle gadget (documented in markdown file)
 
@@ -102,7 +102,7 @@ impl ShuffleProof {
 
         // Construct blinding factors using an RNG.
         // Note: a non-example implementation would want to operate on existing commitments.
-        let mut blinding_rng = rand::thread_rng();
+        let mut blinding_rng = rand::rng();
 
         let (input_commitments, input_vars): (Vec<_>, Vec<_>) = input
             .into_iter()
@@ -172,13 +172,13 @@ fn bench_kshuffle_prove(c: &mut Criterion) {
         "k-shuffle proof creation",
         move |b, k| {
             // Generate inputs and outputs to kshuffle
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             let (min, max) = (0u64, std::u64::MAX);
             let input: Vec<Scalar> = (0..*k)
-                .map(|_| Scalar::from(rng.gen_range(min..max)))
+                .map(|_| Scalar::from(rng.random_range(min..max)))
                 .collect();
             let mut output = input.clone();
-            output.shuffle(&mut rand::thread_rng());
+            output.shuffle(&mut rand::rng());
 
             // Make kshuffle proof
             b.iter(|| {
@@ -214,13 +214,13 @@ fn bench_kshuffle_verify(c: &mut Criterion) {
             // prover variables by the verifier
             let (proof, input_commitments, output_commitments) = {
                 // Generate inputs and outputs to kshuffle
-                let mut rng = rand::thread_rng();
+                let mut rng = rand::rng();
                 let (min, max) = (0u64, std::u64::MAX);
                 let input: Vec<Scalar> = (0..*k)
-                    .map(|_| Scalar::from(rng.gen_range(min..max)))
+                    .map(|_| Scalar::from(rng.random_range(min..max)))
                     .collect();
                 let mut output = input.clone();
-                output.shuffle(&mut rand::thread_rng());
+                output.shuffle(&mut rand::rng());
 
                 let mut prover_transcript = Transcript::new(b"ShuffleBenchmark");
 

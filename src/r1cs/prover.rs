@@ -1,12 +1,12 @@
 #![allow(non_snake_case)]
 
-use clear_on_drop::clear::Clear;
 use core::borrow::BorrowMut;
 use core::mem;
 use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek::scalar::Scalar;
 use curve25519_dalek::traits::{Identity, MultiscalarMul};
 use merlin::Transcript;
+use zeroize::Zeroize;
 
 use super::{
     ConstraintSystem, LinearCombination, R1CSProof, RandomizableConstraintSystem,
@@ -74,24 +74,18 @@ pub struct RandomizingProver<'g, T: BorrowMut<Transcript>> {
 /// Overwrite secrets with null bytes when they go out of scope.
 impl Drop for Secrets {
     fn drop(&mut self) {
-        self.v.clear();
-        self.v_blinding.clear();
+        self.v.zeroize();
+        self.v_blinding.zeroize();
 
-        // Important: due to how ClearOnDrop auto-implements InitializableFromZeroed
-        // for T: Default, calling .clear() on Vec compiles, but does not
-        // clear the content. Instead, it only clears the Vec's header.
-        // Clearing the underlying buffer item-by-item will do the job, but will
-        // keep the header as-is, which is fine since the header does not contain secrets.
         for e in self.a_L.iter_mut() {
-            e.clear();
+            e.zeroize();
         }
         for e in self.a_R.iter_mut() {
-            e.clear();
+            e.zeroize();
         }
         for e in self.a_O.iter_mut() {
-            e.clear();
+            e.zeroize();
         }
-        // XXX use ClearOnDrop instead of doing the above
     }
 }
 
@@ -437,8 +431,8 @@ impl<'g, T: BorrowMut<Transcript>> Prover<'g, T> {
                 builder = builder.rekey_with_witness_bytes(b"v_blinding", v_b.as_bytes());
             }
 
-            use rand::thread_rng;
-            builder.finalize(&mut thread_rng())
+            let mut rng = rand::rng();
+            builder.finalize(&mut rng)
         };
 
         // Commit to the first-phase low-level witness variables.
@@ -706,7 +700,7 @@ impl<'g, T: BorrowMut<Transcript>> Prover<'g, T> {
             .chain(s_R1.iter_mut())
             .chain(s_R2.iter_mut())
         {
-            scalar.clear();
+            scalar.zeroize();
         }
         let proof = R1CSProof {
             A_I1,

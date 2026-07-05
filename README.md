@@ -96,7 +96,6 @@ The following example shows how to create and verify a 32-bit rangeproof.
 # // code in the README.md is actually run as part of the test suite.
 #
 # extern crate rand;
-# use rand::thread_rng;
 #
 # extern crate curve25519_dalek;
 # use curve25519_dalek::scalar::Scalar;
@@ -120,7 +119,8 @@ let bp_gens = BulletproofGens::new(64, 1);
 let secret_value = 1037578891u64;
 
 // The API takes a blinding factor for the commitment.
-let blinding = Scalar::random(&mut thread_rng());
+let mut rng = rand::rng();
+let blinding = Scalar::random(&mut rng);
 
 // The proof can be chained to an existing transcript.
 // Here we create a transcript with a doctest domain separator.

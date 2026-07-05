@@ -458,12 +458,12 @@ impl<T: BorrowMut<Transcript>> Verifier<T> {
         // Create a `TranscriptRng` from the transcript. The verifier
         // has no witness data to commit, so this just mixes external
         // randomness into the existing transcript.
-        use rand::thread_rng;
+        let mut external_rng = rand::rng();
         let mut rng = self
             .transcript
             .borrow_mut()
             .build_rng()
-            .finalize(&mut thread_rng());
+            .finalize(&mut external_rng);
         let r = Scalar::random(&mut rng);
 
         let xx = x * x;

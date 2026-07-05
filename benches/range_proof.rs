@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 
 use rand;
-use rand::Rng;
+use rand::RngExt;
 
 use curve25519_dalek::scalar::Scalar;
 

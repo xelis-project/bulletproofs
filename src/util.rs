@@ -32,6 +32,7 @@ pub struct Poly2(pub Scalar, pub Scalar, pub Scalar);
 /// Represents a degree-6 scalar polynomial, without the zeroth degree
 /// \\(a \cdot x + b \cdot x^2 + c \cdot x^3 + d \cdot x^4 + e \cdot x^5 + f \cdot x^6\\)
 #[cfg(feature = "yoloproofs")]
+#[derive(ZeroizeOnDrop)]
 pub struct Poly6 {
     pub t1: Scalar,
     pub t2: Scalar,
@@ -164,7 +165,6 @@ impl Poly2 {
 }
 
 #[cfg(feature = "yoloproofs")]
-#[derive(ZeroizeOnDrop)]
 impl Poly6 {
     pub fn eval(&self, x: Scalar) -> Scalar {
         x * (self.t1 + x * (self.t2 + x * (self.t3 + x * (self.t4 + x * (self.t5 + x * self.t6)))))

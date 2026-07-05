@@ -9,7 +9,7 @@ use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek::scalar::Scalar;
 use curve25519_dalek::traits::VartimeMultiscalarMul;
 use merlin::Transcript;
-use rand_core::{CryptoRng, RngCore};
+use rand_core::CryptoRng;
 
 use crate::errors::ProofError;
 use crate::inner_product_proof::inner_product;
@@ -37,7 +37,7 @@ impl LinearProof {
     ///
     /// The lengths of the vectors must all be the same, and must all be either 0 or a power of 2.
     /// The proof is created with respect to the bases \\(G\\).
-    pub fn create<T: RngCore + CryptoRng>(
+    pub fn create<T: CryptoRng>(
         transcript: &mut Transcript,
         rng: &mut T,
         // Commitment to witness
@@ -159,6 +159,7 @@ impl LinearProof {
         })
     }
 
+    /// Verify this proof against a commitment, generators, and public vector.
     pub fn verify(
         &self,
         transcript: &mut Transcript,
@@ -282,7 +283,7 @@ impl LinearProof {
 
         // 3. Compute the challenge inverses: 1/x_k, ..., 1/x_1
         let mut challenges_inv = challenges.clone();
-        Scalar::batch_invert(&mut challenges_inv);
+        Scalar::invert_batch_alloc(&mut challenges_inv);
 
         Ok((challenges, challenges_inv, b[0]))
     }

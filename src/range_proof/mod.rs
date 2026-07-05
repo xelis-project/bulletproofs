@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-#![cfg_attr(feature = "docs", doc(include = "../../docs/range-proof-protocol.md"))]
+#![cfg_attr(feature = "docs", doc = include_str!("../../docs/range-proof-protocol.md"))]
 
 use alloc::vec::Vec;
 use curve25519_dalek::traits::{IsIdentity, VartimeMultiscalarMul};
@@ -16,7 +16,7 @@ use crate::inner_product_proof::InnerProductProof;
 use crate::transcript::TranscriptProtocol;
 use crate::util;
 
-use rand_core::{CryptoRng, RngCore};
+use rand_core::CryptoRng;
 use serde::{self, Deserialize, Deserializer, Serialize, Serializer};
 
 // Modules for MPC protocol
@@ -108,8 +108,6 @@ impl RangeProof {
     /// # Example
     /// ```
     /// extern crate rand;
-    /// use rand::thread_rng;
-    ///
     /// extern crate curve25519_dalek;
     /// use curve25519_dalek::scalar::Scalar;
     ///
@@ -132,7 +130,8 @@ impl RangeProof {
     /// let secret_value = 1037578891u64;
     ///
     /// // The API takes a blinding factor for the commitment.
-    /// let blinding = Scalar::random(&mut thread_rng());
+    /// let mut rng = rand::rng();
+    /// let blinding = Scalar::random(&mut rng);
     ///
     /// // The proof can be chained to an existing transcript.
     /// // Here we create a transcript with a doctest domain separator.
@@ -157,7 +156,7 @@ impl RangeProof {
     /// );
     /// # }
     /// ```
-    pub fn prove_single_with_rng<T: RngCore + CryptoRng>(
+    pub fn prove_single_with_rng<T: CryptoRng>(
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
         transcript: &mut Transcript,
@@ -207,8 +206,6 @@ impl RangeProof {
     /// # Example
     /// ```
     /// extern crate rand;
-    /// use rand::thread_rng;
-    ///
     /// extern crate curve25519_dalek;
     /// use curve25519_dalek::scalar::Scalar;
     ///
@@ -231,7 +228,8 @@ impl RangeProof {
     /// let secrets = [4242344947u64, 3718732727u64, 2255562556u64, 2526146994u64];
     ///
     /// // The API takes blinding factors for the commitments.
-    /// let blindings: Vec<_> = (0..4).map(|_| Scalar::random(&mut thread_rng())).collect();
+    /// let mut rng = rand::rng();
+    /// let blindings: Vec<_> = (0..4).map(|_| Scalar::random(&mut rng)).collect();
     ///
     /// // The proof can be chained to an existing transcript.
     /// // Here we create a transcript with a doctest domain separator.
@@ -256,7 +254,7 @@ impl RangeProof {
     /// );
     /// # }
     /// ```
-    pub fn prove_multiple_with_rng<T: RngCore + CryptoRng>(
+    pub fn prove_multiple_with_rng<T: CryptoRng>(
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
         transcript: &mut Transcript,
@@ -338,7 +336,7 @@ impl RangeProof {
     /// Verifies a rangeproof for a given value commitment \\(V\\).
     ///
     /// This is a convenience wrapper around `verify_multiple` for the `m=1` case.
-    pub fn verify_single_with_rng<T: RngCore + CryptoRng>(
+    pub fn verify_single_with_rng<T: CryptoRng>(
         &self,
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
@@ -367,7 +365,7 @@ impl RangeProof {
     }
 
     /// Verifies an aggregated rangeproof for the given value commitments.
-    pub fn verify_multiple_with_rng<T: RngCore + CryptoRng>(
+    pub fn verify_multiple_with_rng<T: CryptoRng>(
         &self,
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
@@ -421,6 +419,7 @@ impl RangeProof {
         }
     }
 
+    /// Batch verify a collection of range proof verification views.
     pub fn verify_batch<'a, V: ValueCommitment + 'a>(
         batch: impl IntoIterator<Item = RangeProofView<'a, V>>,
         bp_gens: &BulletproofGens,
@@ -429,7 +428,8 @@ impl RangeProof {
         Self::verify_batch_with_rng(batch, bp_gens, pc_gens, &mut rand::rng())
     }
 
-    pub fn verify_batch_with_rng<'a, T: RngCore + CryptoRng, V: ValueCommitment + 'a>(
+    /// Batch verify a collection of range proof verification views using the supplied RNG.
+    pub fn verify_batch_with_rng<'a, T: CryptoRng, V: ValueCommitment + 'a>(
         batch: impl IntoIterator<Item = RangeProofView<'a, V>>,
         bp_gens: &BulletproofGens,
         pc_gens: &PedersenGens,
@@ -534,7 +534,7 @@ impl<'de> Deserialize<'de> for RangeProof {
     }
 }
 
-// TODO(merge): naming
+/// A borrowed range proof verification statement for batch verification.
 pub struct RangeProofView<'a, V: ValueCommitment> {
     proof: &'a RangeProof,
     transcript: &'a mut Transcript,
@@ -573,7 +573,7 @@ impl<'a> BatchCollector<'a> {
         }
     }
 
-    fn add_proof<T: RngCore + CryptoRng, V: ValueCommitment>(
+    fn add_proof<T: CryptoRng, V: ValueCommitment>(
         &mut self,
         view: RangeProofView<V>,
         rng: &mut T,
@@ -768,7 +768,7 @@ fn delta(n: usize, m: usize, y: &Scalar, z: &Scalar) -> Scalar {
 
 #[cfg(test)]
 mod tests {
-    use rand::Rng;
+    use rand::RngExt;
 
     use super::*;
 

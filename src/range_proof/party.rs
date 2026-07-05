@@ -17,7 +17,7 @@ use zeroize::ZeroizeOnDrop;
 use core::iter;
 use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek::scalar::Scalar;
-use rand_core::{CryptoRng, RngCore};
+use rand_core::CryptoRng;
 
 use crate::errors::MPCError;
 use crate::generators::{BulletproofGens, PedersenGens};
@@ -83,7 +83,7 @@ impl<'a> PartyAwaitingPosition<'a> {
 
     /// Assigns a position in the aggregated proof to this party,
     /// allowing the party to commit to the bits of their value.
-    pub fn assign_position_with_rng<T: RngCore + CryptoRng>(
+    pub fn assign_position_with_rng<T: CryptoRng>(
         self,
         j: usize,
         rng: &mut T,
@@ -174,7 +174,7 @@ impl<'a> PartyAwaitingBitChallenge<'a> {
 
     /// Receive a [`BitChallenge`] from the dealer and use it to
     /// compute commitments to the party's polynomial coefficients.
-    pub fn apply_challenge_with_rng<T: RngCore + CryptoRng>(
+    pub fn apply_challenge_with_rng<T: CryptoRng>(
         self,
         vc: &BitChallenge,
         rng: &mut T,

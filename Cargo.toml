@@ -4,7 +4,7 @@ name = "bulletproofs"
 # - update version field
 # - update html_root_url
 # - update CHANGELOG
-version = "5.2.0"
+version = "5.3.0"
 authors = ["Cathie Yun <cathieyun@gmail.com>",
            "Henry de Valence <hdevalence@hdevalence.ca>",
            "Oleg Andreev <oleganza@gmail.com>"]
@@ -17,14 +17,14 @@ description = "A pure-Rust implementation of Bulletproofs using Ristretto"
 edition = "2018"
 
 [dependencies]
-curve25519-dalek = { features = ["digest", "group", "rand_core", "serde", "zeroize", "alloc", "std", "precomputed-tables"], default-features = false, git = "https://github.com/xelis-project/curve25519-dalek", branch = "master" }
-merlin = { git = "https://github.com/xelis-project/merlin", default-features = false, tag = "v4.0.0" }
-group = { version = "=0.14.0-pre.0", default-features = false, optional = true }
+curve25519-dalek = { features = ["digest", "group", "rand_core", "serde", "zeroize", "alloc", "std", "precomputed-tables"], default-features = false, git = "https://github.com/xelis-project/curve25519-dalek", tag = "v5.0.2" }
+merlin = { git = "https://github.com/xelis-project/merlin", default-features = false, tag = "v4.1.0" }
+group = { version = "0.14", default-features = false, optional = true }
 subtle = { version = "2.6", default-features = false }
-sha3 = { version = "0.11.0-rc.0", default-features = false }
-digest = { version = "0.11.0-rc.0", default-features = false }
-rand_core = { version = "0.9", default-features = false }
-rand = { version = "0.9", optional = true }
+sha3 = { version = "0.11", default-features = false }
+digest = { version = "0.11", default-features = false }
+rand_core = { version = "0.10", default-features = false }
+rand = { version = "0.10", optional = true }
 byteorder = { version = "1", default-features = false }
 serde = { version = "1", default-features = false, features = ["alloc"] }
 serde_derive = { version = "1", default-features = false }
@@ -35,11 +35,11 @@ zeroize = "1.8.1"
 hex = "0.4"
 criterion = "0.7"
 bincode = "1"
-rand_chacha = "0.9"
-curve25519-dalek = { features = ["digest", "group", "legacy_compatibility", "rand_core", "serde", "zeroize", "std", "alloc", "precomputed-tables"], default-features = false, git = "https://github.com/xelis-project/curve25519-dalek", branch = "master" }
+rand_chacha = "0.10"
+curve25519-dalek = { features = ["digest", "group", "legacy_compatibility", "rand_core", "serde", "zeroize", "std", "alloc", "precomputed-tables"], default-features = false, git = "https://github.com/xelis-project/curve25519-dalek", tag = "v5.0.2" }
 serde_json = "1"
-rand_core = { version = "0.9", default-features = false, features = ["os_rng"] }
-rand = "0.9"
+rand_core = { version = "0.10", default-features = false }
+rand = "0.10"
 
 [features]
 default = ["std"]

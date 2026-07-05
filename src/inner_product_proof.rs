@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-#![cfg_attr(feature = "docs", doc(include = "../docs/inner-product-protocol.md"))]
+#![cfg_attr(feature = "docs", doc = include_str!("../docs/inner-product-protocol.md"))]
 
 extern crate alloc;
 
@@ -15,6 +15,7 @@ use merlin::Transcript;
 use crate::errors::ProofError;
 use crate::transcript::TranscriptProtocol;
 
+/// A proof for an inner-product relation over two committed scalar vectors.
 #[derive(Clone, Debug)]
 pub struct InnerProductProof {
     pub(crate) L_vec: Vec<CompressedRistretto>,
@@ -230,7 +231,7 @@ impl InnerProductProof {
         // 2. Compute 1/(u_k...u_1) and 1/u_k, ..., 1/u_1
 
         let mut challenges_inv = challenges.clone();
-        let allinv = Scalar::batch_invert(&mut challenges_inv);
+        let allinv = Scalar::invert_batch_alloc(&mut challenges_inv);
 
         // 3. Compute u_i^2 and (1/u_i)^2
 
